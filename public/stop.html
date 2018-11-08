@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>广告测试(暂停广告)</title>
+		<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+	</head>
+	<body>
+		<div style="width: 400px;height: 300px;background: gray;cursor:pointer" onclick="windowOpen()">
+			<img id="image" src="">
+		</div>
+
+		<script>
+			var landingurl = '';//广告落地页url
+			var ua = navigator.userAgent;//获取浏览器ua信息
+			var impressurls=[];//存放 图片显示出来 要监控url
+			var clickurls=[];//点击广告要监控的url
+			/**
+			 * 请求参数 id ，mac，pnumber要传入
+			 */
+			var data = {
+				"id":"1",
+				"mac":"9C-4E-36-97-29-F8",
+				"ua":ua,
+				"pnumber":"15000128153"
+			};
+			$.ajax({
+				type:"POST",
+				url:"http://47.104.220.221:8081/ad",
+				withCredentials:true,
+				contentType:"application/json;charset=utf-8",
+				data:JSON.stringify(data),
+				dataType:"json",
+				success:function(res) {
+					//图片
+					var jsonObj2 = res.seats;
+					for (var i=0;i<jsonObj2.length;i++){
+						var sub2 = jsonObj2[i].ads;
+						for (var j =0;j<sub2.length;j++){
+							//console.log(sub2[j].native.image);//得到图片地址
+							$("#image").attr("src",sub2[j].native.image);
+							landingurl = sub2[j].native.landingurl;//点击广告落地页url
+							clickurls = sub2[j].native.clickurl;
+							impressurls = sub2[j].native.impressurl;
+							console.log(landingurl)
+						}
+					}
+					//请求成功;请求impressurl
+					completeLoadImg();
+				},
+				error:function(msg){
+					console.log("fail");
+				}
+			});
+			/**
+			 * 图片加载完成 请求impressurl
+			 */
+			function completeLoadImg(){
+				impressurls = impressurls;
+				if (impressurls.length>0) {
+					for (var i=0;i<clickurls.length;i++){
+						$.ajax({
+							type:"POST",
+							url:clickurls[i],
+							withCredentials:true,
+							contentType:"application/json;charset=utf-8",
+							//data:JSON.stringify(data),
+							dataType:"jsonp",
+							success:function(res) {
+								console.log('success');
+							},
+							error:function(msg){
+								console.log("fail");
+							}
+						});
+					}
+				}
+			}
+
+			/**
+			 * 点击暂停广告 打开落地页
+			 */
+			function windowOpen(){
+				window.open(landingurl);
+				//点击图片 请求
+				clickImg();
+			}
+
+			/**
+			 * 点击图片 请求 clickurl
+			 */
+			function clickImg(){
+				//点击图片时候 执行下面
+				clickurls =clickurls;
+				//debugger;
+				if (clickurls.length>0){
+					for (var i=0;i<clickurls.length;i++){
+						$.ajax({
+							type:"POST",
+							url:clickurls[i],
+							withCredentials:true,
+							contentType:"application/json;charset=utf-8",
+							dataType:"jsonp",
+							success:function(res) {
+								console.log('success');
+							},
+							error:function(msg){
+								console.log("fail");
+							}
+						});
+					}
+				}
+			}
+		</script>
+	</body>
+</html>

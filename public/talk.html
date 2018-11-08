@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>聊天室测试</title>
+		<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+		<link rel="stylesheet" href="stylesheets/reset.css"/>
+		<link rel="stylesheet" href="stylesheets/bootstrap.css"/>
+		<link rel="stylesheet" href="stylesheets/app.css"/>
+		<script type="text/javascript" src="javascripts/bootbox.min.js"></script>
+		<style type="text/css">
+			.div3{
+				width: auto;
+				width: auto;
+				position:relative
+			}
+			.div1{
+				width: auto;
+				height: auto;
+			}
+			.div2 {
+				color:red;
+				position:absolute;
+				right:0;
+				top:0;
+			}
+		</style>
+	</head>
+	<body>
+	<script>
+
+		$.ajaxPrefilter( function (options) {
+			if (options.crossDomain && jQuery.support.cors) {
+				var http = (window.location.protocol === 'http:' ? 'http:' : 'https:');
+				options.url = http + '//cors-anywhere.herokuapp.com/' + options.url;
+				//options.url = "http://cors.corsproxy.io/url=" + options.url;
+			}
+		});
+
+		//websocket的url
+		var wsUrl='';
+		//进入聊天室 获取ws地址
+		var userId="970100008";
+		var roomNo="room2018110111175431_SR11";
+		var userName="";
+		$.ajax({
+			type: "get",
+			url:"http://183.192.162.101:8083/chatlbs/enterRoom?userName="+userName+"&userId="+userId+"&type=2&level=105&roomNo="+roomNo,
+			contentType: "application/json;charset=utf-8",
+			//dataType: "json",
+			dataType:"json",
+			success: function (data) {
+				if (data.ret == "SUCC") {
+					//获取ws地址
+					wsUrl = data.wsUrl;
+					console.log(wsUrl)
+				}
+				//console.log(data.ret)
+				//console.log(JSON.stringify(data));
+			},error:function(error){
+				console.log(error);
+			}
+		});
+		var judgeObj = function(obj){
+			for(var item in obj){
+				return true;
+			}
+			return false;
+		}
+		//创建Socket示例
+		var socket= null;
+		//创建websocket
+		function WebSocketTest(){
+			socket  = new WebSocket(wsUrl);
+			// 打开Socket
+			socket.onopen = function(event) {
+				var params= {
+					isWebSocket: true,
+					msgType: 15,
+					roomNo: 'room2018110111175431_SR11',
+					userId: '970100008',
+					id: '970100008',
+					userName: '',
+					level: 105,
+					type: 102,
+					profile: '{avatar: ""}',
+					plat: 'pc'
+				};
+				socket.send(JSON.stringify(params));
+				// 监听消息
+				socket.onmessage = function(event) {
+					var data = JSON.parse(event.data);
+					if (data != "true" || data !="{}"){
+						var msg = JSON.stringify(data.msg);
+						if (msg =="" ||msg == undefined) {
+						}else {
+							var child = JSON.parse(msg);
+							for (var p in child) {
+								console.log(child[p].id + " " + child[p].msg);
+								var user = JSON.stringify(child[p].user);
+								var t =JSON.parse(user)
+								console.log("user"+ t.name);
+								$("#re").val("昵称："+t.name+"<br/>"+"内容"+child[p].msg)
+							}
+						}
+					}
+				};
+				// 监听Socket的关闭
+				socket.onclose = function(event) {
+					console.log('Client notified socket has closed',event);
+				};
+				// 关闭Socket....
+				//socket.close()
+			}
+		};
+		//发送消息
+		function sendMsg() {
+			var msg = document.getElementById("msg").value;
+			var userId='970100008';
+			var roomNo='room2018110111175431_SR11';
+
+			if (socket.readyState == socket.OPEN) {
+				$.ajax({
+					type: "post",
+					url:"http://183.192.162.101:8083/chatrecv/receiveMessage?userId="+userId+"&msg="+msg+"&roomNo="+roomNo,
+					contentType: "application/json;charset=utf-8",
+					//dataType: "json",
+					dataType:"json",
+					success: function (data) {
+						//console.log("成功");
+					},error:function(error){
+						console.log(JSON.stringify(error));
+					}
+				});
+				//ws.send(msg);
+				//writeToScreen("发送成功!");
+			}
+		};
+	</script>
+
+	<div id="sse">
+		<a href="javascript:WebSocketTest()">进入聊天室</a>
+		<div style="height: 500px;width: 500px;">
+			<textarea id="re" cols="30" rows="30"></textarea>
+		</div>
+
+
+
+		<input type="text" id="msg" />
+		<input type="button"  value="发送消息" onclick="sendMsg();" />
+	</div>
+	</body>
+</html>

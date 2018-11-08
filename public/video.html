@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>广告测试(贴片广告)</title>
+		<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+		<style type="text/css">
+			.div3{
+				width: auto;
+				width: auto;
+				position:relative
+			}
+			.div1{
+				width: auto;
+				height: auto;
+			}
+			.div2 {
+				color:red;
+				position:absolute;
+				right:0;
+				top:0;
+			}
+		</style>
+	</head>
+	<body>
+	<div class="div3">
+		<div class="div1">
+			<video id="myvideo" src="" autoplay="autoplay" style="width:auto;height:auto;cursor:pointer" onclick="windowOpen()">
+			</video>
+		</div>
+		<div class="div2">
+			<label id="time"></label>
+			<button onclick="controlVol()">静音</button>
+		</div>
+	</div>
+		<script>
+
+			var videoWidth = $("#myvideo").width();
+			var videoHeight = $("#myvideo").height();
+			$(".div2").css({"width":videoWidth,"height":videoHeight});
+
+			var landingurl = '';//广告落地页url
+			var ua = navigator.userAgent;//获取浏览器ua信息
+			var starturls=[];//存放 广告视频开始播放，请求地址
+			var overurls =[];//存放 广告视频播放结束，请求地址
+			var clickurls = [];//存放，点击广告视频，请求地址
+			var duration='';//播放时长
+			/**
+			 * 请求参数 id ，mac，pnumber要传入
+			 */
+			var data = {
+				"id":"0",
+				"mac":"9C-4E-36-97-29-F8",
+				"ua":ua,
+				"pnumber":"15000128153"
+			};
+			$.ajax({
+				type:"POST",
+				url:"http://47.104.220.221:8081/ad",
+				withCredentials:true,
+				contentType:"application/json;charset=utf-8",
+				data:JSON.stringify(data),
+				dataType:"json",
+				success:function(res) {
+					//贴片广告视频
+					//将JSON对象转换为字符串
+					var jsonObj1 =res.seats;
+					for (var i=0;i<jsonObj1.length;i++){
+						var sub = jsonObj1[i].ads;
+						for (var j =0;j<sub.length;j++){
+							console.log(sub[j].video.url);//得到视频地址
+							$("#myvideo").attr("src",sub[j].video.url);
+							landingurl = sub[j].video.landingurl;//视频播放落地页
+							clickurls = sub[j].video.clickurl;//点击视频地址
+							starturls = sub[j].video.starturl;//视频开始播放的url
+							overurls = sub[j].video.overurl;//视频结束的url
+							duration = sub[j].video.duration;//获取播放时长
+							//视频开始播放 请求
+							startVideo();
+						}
+					}
+				},
+				error:function(msg){
+					console.log("fail");
+				}
+			});
+
+			/**
+			 * 广告视频开始播放 请求
+			 */
+			function startVideo(){
+				starturls=starturls;
+				if (starturls.length>0) {
+					for (var i=0;i<starturls.length;i++){
+						$.ajax({
+							type:"POST",
+							url:starturls[i],
+							withCredentials:true,
+							contentType:"application/json;charset=utf-8",
+							dataType:"jsonp",
+							success:function(res) {
+								console.log('success');
+							},
+							error:function(msg){
+								console.log("fail");
+							}
+						});
+					}
+				}
+			}
+			/**
+			 * 点击视频 打开落地页
+			 */
+			function windowOpen(){
+				window.open(landingurl)
+				//点击视频
+				clickVideo();
+			}
+			/**
+			 * 点击视频 请求
+			 */
+			function clickVideo(){
+				clickurls =clickurls;
+				//debugger;
+				if (clickurls.length>0){
+					for (var i=0;i<clickurls.length;i++){
+						$.ajax({
+							type:"POST",
+							url:clickurls[i],
+							withCredentials:true,
+							contentType:"application/json;charset=utf-8",
+							dataType:"jsonp",
+							success:function(res) {
+								console.log('success');
+							},
+							error:function(msg){
+								console.log("fail");
+							}
+						});
+					}
+				}
+			}
+
+			//视频播放结束 请求overurl
+			var md=document.getElementsByTagName("video")[0];
+			md.addEventListener("ended",function(){
+				//视频播放结束请求 overurl
+				overurls =overurls;
+				//debugger;
+				if (overurls.length>0){
+					for (var i=0;i<overurls.length;i++){
+						$.ajax({
+							type:"POST",
+							url:overurls[i],
+							withCredentials:true,
+							contentType:"application/json;charset=utf-8",
+							dataType:"jsonp",
+							success:function(res) {
+								console.log('success');
+							},
+							error:function(msg){
+								console.log("fail");
+							}
+						});
+					}
+				}
+			});
+
+			var myVid = document.getElementsByTagName("video")[0];
+			myVid.addEventListener("play",function(){
+				showTime();
+			});
+
+			//设定倒数秒数
+			var duration = duration;
+			//显示倒数秒数
+			function showTime() {
+				duration -= 1;
+				document.getElementById('time').innerHTML = "广告剩余"+duration+"秒";
+				if (duration ==0){
+					return;
+				}
+				//每秒执行一次,showTime()
+				setTimeout("showTime()", 1000);
+			}
+			var isClick=false;
+			function controlVol(){
+				if (isClick == false){
+					alert("已经点击过了");
+					var img = document.getElementsByTagName("video")[0];
+					img.setAttribute("muted",true);
+					isClick=true;
+				}else {
+					alert("还没有点击");
+					isClick=false;
+					var img = document.getElementsByTagName("video")[0];
+					img.setAttribute("muted",false)
+				}
+			}
+		</script>
+	</body>
+</html>
