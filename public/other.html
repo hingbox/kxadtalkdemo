@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<title>聊天室测试other</title>
-		<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+		<script type="text/javascript" src="javascripts/jquery.js"></script>
 		<link rel="stylesheet" href="stylesheets/reset.css"/>
 		<link rel="stylesheet" href="stylesheets/bootstrap.css"/>
 		<link rel="stylesheet" href="stylesheets/app.css"/>
@@ -28,6 +28,7 @@
 		</style>
 	</head>
 	<body>
+
 	<script>
 
 		$.ajaxPrefilter( function (options) {
@@ -41,12 +42,13 @@
 		//websocket的url
 		var wsUrl='';
 		//进入聊天室 获取ws地址
-		var userId="517231729";
-		var roomNo="room2018110111175431_SR11";
-		var userName="";
+		var userId = "970100008";
+		var roomNo = "room2018110111175432_SR11";
+		var userName = "other";
+		var chatUrl="http://183.192.162.101:8083";
 		$.ajax({
 			type: "get",
-			url:"http://183.192.162.101:8083/chatlbs/enterRoom?userName="+userName+"&userId="+userId+"&type=2&level=105&roomNo="+roomNo,
+			url: chatUrl+"/chatlbs/enterRoom?userName="+userName+"&userId="+userId+"&type=2&level=105&roomNo="+roomNo,
 			contentType: "application/json;charset=utf-8",
 			//dataType: "json",
 			dataType:"json",
@@ -62,60 +64,54 @@
 				console.log(error);
 			}
 		});
-		var judgeObj = function(obj){
-			for(var item in obj){
-				return true;
-			}
-			return false;
-		}
 		//创建Socket示例
 		var socket= null;
 		//创建websocket
-		function WebSocketTest(){
-			socket  = new WebSocket(wsUrl);
-			// 打开Socket
-			socket.onopen = function(event) {
-				var params= {
-					isWebSocket: true,
-					msgType: 15,
-					roomNo: roomNo,
-					userId: userId,
-					id: userId,
-					userName: userName,
-					level: 105,
-					type: 102,
-					profile: '{avatar: ""}',
-					plat: 'pc'
-				};
-				socket.send(JSON.stringify(params));
-				// 监听消息
-				socket.onmessage = function(event) {
-					var data = JSON.parse(event.data);
-					if (data != "true" || data !="{}"){
-						var msg = JSON.stringify(data.msg);
-						if (msg =="" ||msg == undefined) {
-						}else {
-							var child = JSON.parse(msg);
-							for (var p in child) {
-								//console.log(child[p].id + " " + child[p].msg);
-								var user = JSON.stringify(child[p].user);
-								var t =JSON.parse(user)
-								console.log("user"+ t.name);
-								addMessage('你', child[p].msg);
-//								document.querySelector('textarea').innerHtml='';
-								//$("#re").val("昵称："+t.name+"<br/>"+"内容"+child[p].msg)
-							}
-						}
-					}
-				};
-				// 监听Socket的关闭
-				socket.onclose = function(event) {
-					console.log('Client notified socket has closed',event);
-				};
-				// 关闭Socket....
-				//socket.close()
-			}
-		};
+//		function WebSocketTest(){
+//			socket  = new WebSocket(wsUrl);
+//			// 打开Socket
+//			socket.onopen = function(event) {
+//				var params= {
+//					isWebSocket: true,
+//					msgType: 15,
+//					roomNo: roomNo,
+//					userId: userId,
+//					id: userId,
+//					userName: userName,
+//					level: 105,
+//					type: 102,
+//					profile: '{avatar: ""}',
+//					plat: 'pc'
+//				};
+//				socket.send(JSON.stringify(params));
+//				// 监听消息
+//				socket.onmessage = function(event) {
+//					var data = JSON.parse(event.data);
+//					if (data != "true" || data !="{}"){
+//						var msg = JSON.stringify(data.msg);
+//						if (msg =="" ||msg == undefined) {
+//						}else {
+//							var child = JSON.parse(msg);
+//							for (var p in child) {
+//								//console.log(child[p].id + " " + child[p].msg);
+//								var user = JSON.stringify(child[p].user);
+//								var t =JSON.parse(user)
+//								console.log("user"+ t.name);
+//								addMessage(t.name, child[p].msg);
+////								document.querySelector('textarea').innerHtml='';
+//								//$("#re").val("昵称："+t.name+"<br/>"+"内容"+child[p].msg)
+//							}
+//						}
+//					}
+//				};
+//				// 监听Socket的关闭
+//				socket.onclose = function(event) {
+//					console.log('Client notified socket has closed',event);
+//				};
+//				// 关闭Socket....
+//				//socket.close()
+//			}
+//		};
 
 		var addMessage = function(from, msg){
 			var li = document.createElement('li');
@@ -142,7 +138,7 @@
 			if (socket.readyState == socket.OPEN) {
 				$.ajax({
 					type: "post",
-					url:"http://183.192.162.101:8083/chatrecv/receiveMessage?userId="+userId+"&msg="+msg+"&roomNo="+roomNo,
+					url:chatUrl+"/chatrecv/receiveMessage?userId="+userId+"&msg="+msg+"&roomNo="+roomNo,
 					contentType: "application/json;charset=utf-8",
 					//dataType: "json",
 					dataType:"json",
@@ -156,43 +152,71 @@
 				//writeToScreen("发送成功!");
 			}
 		};
-		function clearContent(){
-			console.log('进来了');
-			$('#chat_conatiner').val('') ;
-		};
-//		document.querySelector('#clear').addEventListener('click', function(){
-//			document.querySelector('#chat_conatiner').innerHTML = '';
-//		});
-//		$('#clear').addEventListener('click', function(){
-//			$('#chat_conatiner').innerHTML = '';
-//		});
-
-		window.setTimeout(function() {
+		/**
+		 * 由于进入页面不能立即拿到ws地址，故延迟2秒去连接socket
+		 */
+		setTimeout(function(){
+			socket  = new WebSocket(wsUrl);
+			// 打开Socket
+			socket.onopen = function(event) {
+				var params= {
+					isWebSocket: true,
+					msgType: 15,
+					roomNo: roomNo,
+					userId: userId,
+					id: userId,
+					userName: userName,
+					level: 105,
+					type: 102,
+					profile: '{avatar: ""}',
+					plat: 'pc'
+				};
+				socket.send(JSON.stringify(params));
+				// 监听消息
+				socket.onmessage = function(event) {
+					var data = JSON.parse(event.data);
+					//console.log("other接收消息"+JSON.stringify(data));//调试用
+					if (data != "true" || data !="{}" ||data !=undefined){
+						var msg = JSON.stringify(data.msg);
+						if (msg =="" ||msg == undefined) {
+						}else {
+							var child = JSON.parse(msg);
+							for (var p in child) {
+								//console.log(child[p].id + " " + child[p].msg);
+								var user = JSON.stringify(child[p].user);
+								var t =JSON.parse(user)
+								console.log("user"+ t.name);
+								addMessage(t.name, child[p].msg);
+							}
+						}
+					}
+				};
+				// 监听Socket的关闭
+				socket.onclose = function(event) {
+					console.log('Client notified socket has closed',event);
+				};
+				// 关闭Socket....
+				//socket.close()
+			}
+		}, 3000);
+		setTimeout(function(){
 			document.getElementById("clear").addEventListener("click", function(){
 				document.getElementById("chat_conatiner").innerHTML = '';
 			});
-		}, 500);
+		},500);
+		clearInterval();
 	</script>
 	<div class="wrapper">
-		<a href="javascript:WebSocketTest()">进入聊天室</a>
 		<div class="content" id="chat">
 			<ul id="chat_conatiner">
 			</ul>
 		</div>
 		<div class="action" >
-			<textarea class="form-control" required></textarea>
+			<!-- 限制文本框 最多30个中文汉字-->
+			<textarea maxlength="30"></textarea>
 			<button class="btn btn-success" id="clear">清屏</button>
 			<button class="btn btn-success" id="send" onclick="sendMsg();">发送</button>
 		</div>
-	</div>
-	<div id="sse">
-		<!--<a href="javascript:WebSocketTest()">进入聊天室</a>-->
-		<!--<div style="height: 500px;width: 500px;">-->
-			<!--<textarea id="re" cols="30" rows="30"></textarea>-->
-		<!--</div>-->
-
-		<!--<input type="text" id="msg" />-->
-		<!--<input type="button"  value="发送消息" onclick="sendMsg();" />-->
 	</div>
 	</body>
 </html>

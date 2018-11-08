@@ -1,153 +1,264 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="UTF-8">
-		<title>聊天室测试</title>
-		<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-		<link rel="stylesheet" href="stylesheets/reset.css"/>
-		<link rel="stylesheet" href="stylesheets/bootstrap.css"/>
-		<link rel="stylesheet" href="stylesheets/app.css"/>
-		<script type="text/javascript" src="javascripts/bootbox.min.js"></script>
-		<style type="text/css">
-			.div3{
-				width: auto;
-				width: auto;
-				position:relative
-			}
-			.div1{
-				width: auto;
-				height: auto;
-			}
-			.div2 {
-				color:red;
-				position:absolute;
-				right:0;
-				top:0;
-			}
-		</style>
-	</head>
-	<body>
-	<script>
-
-		$.ajaxPrefilter( function (options) {
-			if (options.crossDomain && jQuery.support.cors) {
-				var http = (window.location.protocol === 'http:' ? 'http:' : 'https:');
-				options.url = http + '//cors-anywhere.herokuapp.com/' + options.url;
-				//options.url = "http://cors.corsproxy.io/url=" + options.url;
-			}
-		});
-
-		//websocket的url
-		var wsUrl='';
-		//进入聊天室 获取ws地址
-		var userId="970100008";
-		var roomNo="room2018110111175431_SR11";
-		var userName="";
-		$.ajax({
-			type: "get",
-			url:"http://183.192.162.101:8083/chatlbs/enterRoom?userName="+userName+"&userId="+userId+"&type=2&level=105&roomNo="+roomNo,
-			contentType: "application/json;charset=utf-8",
-			//dataType: "json",
-			dataType:"json",
-			success: function (data) {
-				if (data.ret == "SUCC") {
-					//获取ws地址
-					wsUrl = data.wsUrl;
-					console.log(wsUrl)
-				}
-				//console.log(data.ret)
-				//console.log(JSON.stringify(data));
-			},error:function(error){
-				console.log(error);
-			}
-		});
-		var judgeObj = function(obj){
-			for(var item in obj){
-				return true;
-			}
-			return false;
+<head>
+	<meta charset="UTF-8">
+	<title>聊天室测试</title>
+	<script type="text/javascript" src="javascripts/jquery.js"></script>
+	<link rel="stylesheet" href="stylesheets/bootstrap.css"/>
+	<script type="text/javascript" src="javascripts/bootstrap.min.js"></script>
+	<style type="text/css">
+		html, body, div, span, applet, object, iframe,
+		h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+		a, abbr, acronym, address, big, cite, code,
+		del, dfn, em, img, ins, kbd, q, s, samp,
+		small, strike, strong, sub, sup, tt, var,
+		b, u, i, center,
+		dl, dt, dd, ol, ul, li,
+		fieldset, form, label, legend,
+		table, caption, tbody, tfoot, thead, tr, th, td,
+		article, aside, canvas, details, embed,
+		figure, figcaption, footer, header,
+		menu, nav, output, ruby, section, summary,
+		time, mark, audio, video {
+			margin: 0;
+			padding: 0;
+			border: 0;
+			font-size: 100%;
+			font: inherit;
+			vertical-align: baseline;
 		}
-		//创建Socket示例
-		var socket= null;
-		//创建websocket
-		function WebSocketTest(){
-			socket  = new WebSocket(wsUrl);
-			// 打开Socket
-			socket.onopen = function(event) {
-				var params= {
-					isWebSocket: true,
-					msgType: 15,
-					roomNo: 'room2018110111175431_SR11',
-					userId: '970100008',
-					id: '970100008',
-					userName: '',
-					level: 105,
-					type: 102,
-					profile: '{avatar: ""}',
-					plat: 'pc'
-				};
-				socket.send(JSON.stringify(params));
-				// 监听消息
-				socket.onmessage = function(event) {
-					var data = JSON.parse(event.data);
-					if (data != "true" || data !="{}"){
-						var msg = JSON.stringify(data.msg);
-						if (msg =="" ||msg == undefined) {
-						}else {
-							var child = JSON.parse(msg);
-							for (var p in child) {
-								console.log(child[p].id + " " + child[p].msg);
-								var user = JSON.stringify(child[p].user);
-								var t =JSON.parse(user)
-								console.log("user"+ t.name);
-								$("#re").val("昵称："+t.name+"<br/>"+"内容"+child[p].msg)
-							}
+		/* HTML5 display-role reset for older browsers */
+		article, aside, details, figcaption, figure,
+		footer, header, menu, nav, section {
+			display: block;
+		}
+		body {
+			line-height: 1;
+		}
+		ol, ul {
+			list-style: none;
+		}
+		blockquote, q {
+			quotes: none;
+		}
+		blockquote:before, blockquote:after,
+		q:before, q:after {
+			content: '';
+			content: none;
+		}
+		table {
+			border-collapse: collapse;
+			border-spacing: 0;
+		}
+		html{
+			height: 100%;
+			overflow: hidden;
+		}
+		body{
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			background-color: gainsboro;
+			font: 12px/1.4 '微软雅黑';
+		}
+		.wrapper{
+			width: 80%;
+			height: 95%;
+			border-radius: 5px;
+			border: 1px solid #ccc;
+			margin: 10px auto;
+			background-color: #EFF4FA;
+			box-sizing: border-box;
+		}
+
+		.wrapper .content{
+			box-sizing: border-box;
+			height: 73%;
+			border: 1px solid #ccc;
+			margin: 1% 10px;
+			padding: 5px;
+			overflow-y: auto;
+			background-color: #000000;
+		}
+
+		.wrapper .content ul li{
+			font-size: 14px;
+			padding: 5px;
+			color: #ffffff;
+		}
+		.wrapper .content ul li span{
+			font-style: italic;
+			color: greenyellow;
+		}
+
+		.wrapper .action{
+			box-sizing: border-box;
+			height: 23%;
+			border: 1px solid #ccc;
+			margin: 1% 10px;
+			padding: 5px;
+			overflow: hidden;
+		}
+		.wrapper .action textarea{
+			width: 100%;
+			height: 40%;
+			border-radius: 3px;
+			display: block;
+			margin-bottom: 5px;
+			padding: 5px;
+		}
+		.wrapper .action button{
+			float: right;
+			margin-right: 5px;
+			margin-left: 5px;
+		}
+	</style>
+</head>
+<body>
+
+<script>
+
+	$.ajaxPrefilter( function (options) {
+		if (options.crossDomain && jQuery.support.cors) {
+			var http = (window.location.protocol === 'http:' ? 'http:' : 'https:');
+			options.url = http + '//cors-anywhere.herokuapp.com/' + options.url;
+			//options.url = "http://cors.corsproxy.io/url=" + options.url;
+		}
+	});
+
+	//websocket的url
+	var wsUrl='';
+	//进入聊天室 获取ws地址
+	var userId = "517231729";
+	var roomNo = "room2018110111175432_SR11";
+	var userName = "talk";
+	var chatUrl = "http://183.192.162.101:8083";
+	$.ajax({
+		type: "get",
+		url: chatUrl + "/chatlbs/enterRoom?userName="+userName+"&userId="+userId+"&type=102&level=105&roomNo="+roomNo,
+		contentType: "application/json;charset=utf-8",
+		//dataType: "json",
+		dataType:"json",
+		success: function (data) {
+			if (data.ret == "SUCC") {
+				//获取ws地址
+				wsUrl = data.wsUrl;
+				console.log(wsUrl)
+			}
+			//console.log(data.ret)
+			//console.log(JSON.stringify(data));
+		},error:function(error){
+			console.log(error);
+		}
+	});
+
+	//创建Socket示例
+	var socket= null;
+
+	var addMessage = function(from, msg){
+		var li = document.createElement('li');
+		li.innerHTML = '<span>' + from + '</span>' + ' : ' + msg;
+		document.querySelector('#chat_conatiner').appendChild(li);
+		// 设置内容区的滚动条到底部
+		document.querySelector('#chat').scrollTop = document.querySelector('#chat').scrollHeight;
+
+		// 并设置焦点
+		document.querySelector('textarea').focus();
+	}
+	//发送消息
+	function sendMsg() {
+		var ele_msg = document.querySelector('textarea');
+		var msg = ele_msg.value.replace('\r\n', '').trim();
+		console.log(msg);
+		if(msg == ""){
+//			bootbox.alert("发送内容不能为空", function () {
+//				var strResult = "";
+//			})
+			alert("发送内容不能为空");
+			return;
+		}
+		if (socket.readyState == socket.OPEN) {
+			$.ajax({
+				type: "post",
+				url:chatUrl+"/chatrecv/receiveMessage?userId="+userId+"&msg="+msg+"&roomNo="+roomNo,
+				contentType: "application/json;charset=utf-8",
+				//dataType: "json",
+				dataType:"json",
+				success: function (data) {
+					ele_msg.value = '';
+				},error:function(error){
+					console.log(JSON.stringify(error));
+				}
+			});
+			//ws.send(msg);
+			//writeToScreen("发送成功!");
+		}
+	};
+
+	/**
+	 * 由于进入页面不能立即拿到ws地址，故延迟3秒去连接socket
+	 */
+	setTimeout(function(){
+		socket  = new WebSocket(wsUrl);
+		// 打开Socket
+		socket.onopen = function(event) {
+			var params= {
+				isWebSocket: true,
+				msgType: 15,
+				roomNo: roomNo,
+				userId: userId,
+				id: userId,
+				userName: userName,
+				level: 105,
+				type: 102,
+				profile: '{avatar: ""}',
+				plat: 'pc'
+			};
+			socket.send(JSON.stringify(params));
+			// 监听消息
+			socket.onmessage = function(event) {
+				var data = JSON.parse(event.data);
+				//console.log("talk接收消息"+JSON.stringify(data));//调试用
+				if (data != "true" || data !="{}" ||data !=undefined){
+					var msg = JSON.stringify(data.msg);
+					if (msg =="" ||msg == undefined) {
+					}else {
+						var child = JSON.parse(msg);
+						for (var p in child) {
+							var user = JSON.stringify(child[p].user);
+							var t =JSON.parse(user);
+							console.log("user"+ t.name);
+							addMessage(t.name, child[p].msg);
 						}
 					}
-				};
-				// 监听Socket的关闭
-				socket.onclose = function(event) {
-					console.log('Client notified socket has closed',event);
-				};
-				// 关闭Socket....
-				//socket.close()
-			}
-		};
-		//发送消息
-		function sendMsg() {
-			var msg = document.getElementById("msg").value;
-			var userId='970100008';
-			var roomNo='room2018110111175431_SR11';
-
-			if (socket.readyState == socket.OPEN) {
-				$.ajax({
-					type: "post",
-					url:"http://183.192.162.101:8083/chatrecv/receiveMessage?userId="+userId+"&msg="+msg+"&roomNo="+roomNo,
-					contentType: "application/json;charset=utf-8",
-					//dataType: "json",
-					dataType:"json",
-					success: function (data) {
-						//console.log("成功");
-					},error:function(error){
-						console.log(JSON.stringify(error));
-					}
-				});
-				//ws.send(msg);
-				//writeToScreen("发送成功!");
-			}
-		};
-	</script>
-
-	<div id="sse">
-		<a href="javascript:WebSocketTest()">进入聊天室</a>
-		<div style="height: 500px;width: 500px;">
-			<textarea id="re" cols="30" rows="30"></textarea>
-		</div>
-
-
-
-		<input type="text" id="msg" />
-		<input type="button"  value="发送消息" onclick="sendMsg();" />
+				}
+			};
+			// 监听Socket的关闭
+			socket.onclose = function(event) {
+				console.log('Client notified socket has closed',event);
+			};
+			// 关闭Socket....
+			//socket.close()
+		}
+	}, 3000);
+	setTimeout(function(){
+		document.getElementById("clear").addEventListener("click", function(){
+			document.getElementById("chat_conatiner").innerHTML = '';
+		});
+	},500);
+	clearInterval();
+</script>
+<div class="wrapper">
+	<div class="content" id="chat">
+		<ul id="chat_conatiner">
+		</ul>
 	</div>
-	</body>
+	<div class="action" >
+		<!-- 限制文本框 最多30个中文汉字-->
+		<textarea maxlength="30"></textarea>
+		<button class="btn btn-success" id="clear">清屏</button>
+		<button class="btn btn-success" id="send" onclick="sendMsg();">发送</button>
+	</div>
+</div>
+</body>
 </html>
