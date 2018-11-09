@@ -5,7 +5,9 @@
 	<title>聊天室测试</title>
 	<script type="text/javascript" src="javascripts/jquery.js"></script>
 	<link rel="stylesheet" href="stylesheets/bootstrap.css"/>
+	<link rel="stylesheet" href="stylesheets/toastr.min.css"/>
 	<script type="text/javascript" src="javascripts/bootstrap.min.js"></script>
+	<script type="text/javascript" src="javascripts/toastr.min.js"></script>
 	<style type="text/css">
 		html, body, div, span, applet, object, iframe,
 		h1, h2, h3, h4, h5, h6, p, blockquote, pre,
@@ -117,7 +119,9 @@
 <body>
 
 <script>
-
+	/**
+	 * 解决跨域问题
+	 */
 	$.ajaxPrefilter( function (options) {
 		if (options.crossDomain && jQuery.support.cors) {
 			var http = (window.location.protocol === 'http:' ? 'http:' : 'https:');
@@ -137,16 +141,13 @@
 		type: "get",
 		url: chatUrl + "/chatlbs/enterRoom?userName="+userName+"&userId="+userId+"&type=102&level=105&roomNo="+roomNo,
 		contentType: "application/json;charset=utf-8",
-		//dataType: "json",
 		dataType:"json",
 		success: function (data) {
 			if (data.ret == "SUCC") {
 				//获取ws地址
 				wsUrl = data.wsUrl;
-				console.log(wsUrl)
+				console.log("获取WebStocketUrl成功--"+wsUrl)
 			}
-			//console.log(data.ret)
-			//console.log(JSON.stringify(data));
 		},error:function(error){
 			console.log(error);
 		}
@@ -164,18 +165,19 @@
 
 		// 并设置焦点
 		document.querySelector('textarea').focus();
-	}
+	};
 	//发送消息
 	function sendMsg() {
 		var ele_msg = document.querySelector('textarea');
 		var msg = ele_msg.value.replace('\r\n', '').trim();
-		console.log(msg);
+		console.log("发送消息内容为："+msg);
 		if(msg == ""){
-//			bootbox.alert("发送内容不能为空", function () {
-//				var strResult = "";
-//			})
-			alert("发送内容不能为空");
-			return;
+			toastr.warning('发送内容不能为空！','提示');
+			return false;
+		}
+		if(socket == null) {
+			toastr.success('聊天室初始化，请稍后');
+			return false;
 		}
 		if (socket.readyState == socket.OPEN) {
 			$.ajax({
@@ -247,6 +249,23 @@
 		});
 	},500);
 	clearInterval();
+</script>
+<script>
+	toastr.options = {
+		closeButton: false,
+		debug: false,
+		progressBar: true,
+		positionClass: "toast-bottom-center",
+		onclick: null,
+		showDuration: "300",
+		hideDuration: "1000",
+		timeOut: "2000",
+		extendedTimeOut: "1000",
+		showEasing: "swing",
+		hideEasing: "linear",
+		showMethod: "fadeIn",
+		hideMethod: "fadeOut"
+	};
 </script>
 <div class="wrapper">
 	<div class="content" id="chat">
